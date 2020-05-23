@@ -1,0 +1,52 @@
+package main
+
+import (
+	"fmt"
+
+	"github.com/urfave/cli/v2"
+)
+
+func init() {
+	app.Commands = []*cli.Command{
+		{
+			Name:  "new",
+			Usage: "",
+			Action: func(c *cli.Context) error {
+				fmt.Println("new command: ", c.Args().First())
+				return nil
+			},
+			Flags: []cli.Flag{
+				&cli.BoolFlag{Name: "month", Aliases: []string{"m"}},
+				&cli.BoolFlag{Name: "week", Aliases: []string{"w"}},
+				&cli.BoolFlag{Name: "day", Aliases: []string{"d"}},
+			},
+		},
+		{
+			Name:  "post",
+			Usage: "",
+			Action: func(c *cli.Context) error {
+				fmt.Println("post command: ", c.Args().First())
+				return nil
+			},
+			Flags: []cli.Flag{
+				&cli.StringFlag{Name: "template", Aliases: []string{"t"}},
+			},
+		},
+		{
+			Name:  "test",
+			Usage: "",
+			Action: func(c *cli.Context) error {
+				fmt.Println("test command: ", c.Args().First())
+				return nil
+			},
+		},
+		{
+			Name:  "pub",
+			Usage: "",
+			Action: func(c *cli.Context) error {
+				fmt.Println("publish command: ", c.Args().First())
+				return nil
+			},
+		},
+	}
+}

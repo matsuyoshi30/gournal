@@ -9,6 +9,8 @@ import (
 
 const name = "gournal"
 
+var app = cli.NewApp()
+
 func main() {
 	os.Exit(run(os.Args))
 }
@@ -19,11 +21,9 @@ const (
 )
 
 func run(args []string) int {
-	app := &cli.App{
-		Name:    name,
-		Usage:   "Journal tool written in Go",
-		Version: "0.0.1",
-	}
+	app.Name = name
+	app.Usage = "Journal tool written in Go"
+	app.Version = "0.0.1"
 
 	if err := app.Run(args); err != nil {
 		fmt.Println(err)
