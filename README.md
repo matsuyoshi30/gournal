@@ -26,7 +26,7 @@ path/to/project
 ├── template
 │   ├── index.html.tmpl
 │   └── content.html.tmpl
-└── confyaml
+└── config.yaml
 ```
 
 sample `config.yaml`
