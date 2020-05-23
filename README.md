@@ -5,13 +5,15 @@
 ### gournal new
 
 ```
-$ gournal new [-month|-week(default)|-day] <projectname>
+$ mkdir path/to/project
+$ gournal new [--month|--week(default)|--day] path/to/project
 ```
 
-If you command `gournal new week newproject`, make the project directory like below.
+If you command `gournal new --week newproject`, make the project directory like below.
 
 ```
-.newproject
+path/to/project
+├─public # path/to/publish
 ├── content
 │   └── yyyy
 │       └── mm-dd.md
@@ -24,30 +26,16 @@ If you command `gournal new week newproject`, make the project directory like be
 ├── template
 │   ├── index.html.tmpl
 │   └── content.html.tmpl
-└── config.json
+└── confyaml
 ```
 
-sample `config.json`
+sample `config.yaml`
 
 ```
-{
-  "name": "newproject",
-  "version": "1.0.0",
-  "description": "weekly journal",
-  "type": "weekly",
-  "title": "weekly journal",
-  "domain": "",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/matsuyoshi30/gournal.git"
-  },
-  "author": "matsuyoshi30",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/matsuyoshi30/gournal/issues"
-  },
-  "homepage": "https://github.com/matsuyoshi30/gournal#readme"
-}
+name: new-project-name
+description: This is new project
+type: week
+author: matsuyoshi30
 ```
 
 You can add and delete files in the `static` and `template`, but cannot change directory structure.
@@ -69,7 +57,8 @@ Build html page contains static files from markdown and template file.
 If you make the project like below and command `gournal pub`,
 
 ```
-.project root
+path/to/project
+├─public # path/to/publish
 ├── content
 │   ├── yyyy
 │   │   └── yy-mm.md  # Monthly
@@ -96,7 +85,7 @@ If you make the project like below and command `gournal pub`,
 you get the build result like below.
 
 ```
-.build destination dir
+path/to/publish
 ├── yyyy
 │   └── yy-mm.md  # Monthly
 ├── yyyy
@@ -115,7 +104,7 @@ you get the build result like below.
 └── index.html
 ```
 
-Default build destination dir is `project/build`
+Default build destination dir is `path/to/project/public`
 
 # LICENSE
 
