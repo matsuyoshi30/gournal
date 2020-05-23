@@ -40,6 +40,13 @@ author: matsuyoshi30
 
 You can add and delete files in the `static` and `template`, but cannot change directory structure.
 
+### gournal post
+
+You can create new journal post using `gournal post`.
+
+It creates new file under `content` directory applying `content.html.tmpl`.
+If you prefer to use different template, you can specify another template using `-t` flag like `-t <template filename>`
+
 ### gournal test
 
 You can check your contents and static files by `gournal test`.
