@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/urfave/cli/v2"
@@ -12,6 +13,10 @@ func init() {
 			Name:  "new",
 			Usage: "",
 			Action: func(c *cli.Context) error {
+				if c.Args().Len() == 0 {
+					return errors.New("invalid argument")
+				}
+
 				config.Type = TypeWeekly // default
 				if c.Bool("month") {
 					config.Type = TypeMonthly
