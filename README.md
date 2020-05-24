@@ -39,8 +39,16 @@ You can add and delete files in the `static` and `template`, but cannot change d
 
 You can create new journal post using `gournal post`.
 
-It creates new file under `content` directory applying `content.html.tmpl`.
-If you prefer to use different template, you can specify another template using `-t` flag like `-t <template filename>`
+#### Example
+
+`gournal post` at `2020-05-24`
+
+- TypeDaily
+  - create `content/2020/05/24.md`
+- TypeWeekly
+  - create `content/2020/05-18.md` (starting weekday is Monday)
+- TypeMonthly
+  - create `content/202005.md`
 
 ### gournal test
 
