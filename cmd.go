@@ -36,8 +36,10 @@ func init() {
 			Name:  "post",
 			Usage: "",
 			Action: func(c *cli.Context) error {
-				fmt.Println("post command: ", c.Args().First())
-				return nil
+				if err := config.Load("config.yaml"); err != nil {
+					return err
+				}
+				return config.Post()
 			},
 			Flags: []cli.Flag{
 				&cli.StringFlag{Name: "template", Aliases: []string{"t"}},
