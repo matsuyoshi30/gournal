@@ -12,8 +12,14 @@ func init() {
 			Name:  "new",
 			Usage: "",
 			Action: func(c *cli.Context) error {
-				fmt.Println("new command: ", c.Args().First())
-				return nil
+				config.Type = TypeWeekly // default
+				if c.Bool("month") {
+					config.Type = TypeMonthly
+				}
+				if c.Bool("day") {
+					config.Type = TypeDaily
+				}
+				return config.New(c.Args().First())
 			},
 			Flags: []cli.Flag{
 				&cli.BoolFlag{Name: "month", Aliases: []string{"m"}},
