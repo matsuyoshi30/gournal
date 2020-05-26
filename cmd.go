@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/urfave/cli/v2"
 )
@@ -59,8 +58,10 @@ func init() {
 			Name:  "pub",
 			Usage: "",
 			Action: func(c *cli.Context) error {
-				fmt.Println("publish command: ", c.Args().First())
-				return nil
+				if err := config.Load("config.yaml"); err != nil {
+					return err
+				}
+				return config.Publish()
 			},
 		},
 	}

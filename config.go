@@ -325,3 +325,30 @@ func (config *Config) Serve() error {
 	http.Handle("/", http.FileServer(http.Dir(dir)))
 	return http.ListenAndServe(":8080", nil)
 }
+
+func (config *Config) Publish() error {
+	publishDir := filepath.Join(config.Wd, "public")
+
+	if err := config.Build(publishDir); err != nil {
+		return err
+	}
+
+	iTmpl, err := ioutil.ReadFile(filepath.Join(config.Wd, "template", "index.html.tmpl"))
+	if err != nil {
+		return err
+	}
+
+	t, err := template.New("index").Parse(string(iTmpl))
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(filepath.Join(publishDir, "index.html"))
+	if err != nil {
+		return err
+	}
+	if err := t.Execute(f, config); err != nil {
+		return err
+	}
+
+	return nil
+}
