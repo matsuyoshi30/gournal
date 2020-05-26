@@ -142,7 +142,7 @@ func (config *Config) New(dirpath string) error {
 			file = filepath.Join(wd, f.dir, f.filename)
 		}
 
-		if err := ioutil.WriteFile(file, []byte(f.contents), 0755); err != nil {
+		if err := ioutil.WriteFile(file, []byte(f.contents), 0644); err != nil {
 			return err
 		}
 	}
@@ -208,7 +208,7 @@ func (config *Config) Post() error {
 	} else if config.Type == TypeMonthly {
 		filename = strconv.Itoa(year) + month.String() + ".md"
 	}
-	if err := ioutil.WriteFile(filepath.Join(dir, filename), b, 0755); err != nil {
+	if err := ioutil.WriteFile(filepath.Join(dir, filename), b, 0644); err != nil {
 		return err
 	}
 
