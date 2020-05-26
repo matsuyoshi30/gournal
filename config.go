@@ -1,12 +1,16 @@
 package main
 
 import (
+	"html/template"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/matsuyoshi30/gom2h"
 	"gopkg.in/yaml.v2"
 )
 
@@ -24,6 +28,7 @@ type Config struct {
 	TypeStr     string `yaml:"typestr"`
 	Wd          string `yaml:"wd"`
 	Type        JournalType
+	Posts       []Post
 }
 
 var config Config
@@ -31,13 +36,22 @@ var config Config
 var indexTmpl = `<!DOCTYPE html>
 <html>
   <head>
-    <title></title>
+    <title>{{ .Name }}</title>
   </head>
   <body>
-    <h1></h1>
+    <article>
+      <h1>{{ .Name }}</h1>
+      {{ range .Posts }}<a href="{{ .Link }}"><p>{{ .Title }}</p></a>>{{ end }}
+    </article>
   </body>
 </html>
 `
+
+type Post struct {
+	Title     string
+	Link      string
+	UpdatedAt time.Time
+}
 
 var contentTmpl = `# Title
 
@@ -45,8 +59,8 @@ var contentTmpl = `# Title
 
 `
 
-var configTmpl = `name: <your project name>
-description: <your project description>
+var configTmpl = `name: your project name
+description: your project description
 `
 
 func (config *Config) New(dirpath string) error {
@@ -209,4 +223,92 @@ func (config *Config) Load(filename string) error {
 	config.Type = config.stringToType()
 
 	return nil
+}
+
+func (config *Config) Serve() error {
+	dir, err := ioutil.TempDir("", "tmp")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+
+	// build html from markdown file
+	posts := make([]Post, 0)
+	err = filepath.Walk(filepath.Join(config.Wd, "content"), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			if path[len(filepath.Dir(path))+1:] != "content" {
+				if string(path[len(path)-5]) == "/" {
+					if err := os.Mkdir(filepath.Join(dir, path[len(filepath.Dir(path))+1:]), os.ModePerm); err != nil {
+						return err
+					}
+				} else {
+					if err := os.Mkdir(filepath.Join(dir, filepath.Dir(path)[len(filepath.Dir(path))-4:], path[len(filepath.Dir(path))+1:]), os.ModePerm); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			b, err := ioutil.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			output, err := gom2h.Run(b)
+			if err != nil {
+				return err
+			}
+
+			filename := filepath.Base(path)
+			ext := filepath.Ext(filename)
+			htmlFile := filename[0:len(filename)-len(ext)] + ".html" // TypeMonthly
+
+			if !strings.HasSuffix(filepath.Dir(path), "content") {
+				if string(filepath.Dir(path)[len(filepath.Dir(path))-3]) != "/" { // TypeWeekly
+					htmlFile = filepath.Join(filepath.Dir(path)[len(filepath.Dir(path))-4:], filename[0:len(filename)-len(ext)]+".html")
+				} else { // TypeDaily
+					m := filepath.Dir(path)[len(filepath.Dir(path))-2:]
+					y := filepath.Dir(path)[len(filepath.Dir(path))-7 : len(filepath.Dir(path))-3]
+					htmlFile = filepath.Join(y, m, filename[0:len(filename)-len(ext)]+".html")
+				}
+			}
+			if err := ioutil.WriteFile(filepath.Join(dir, htmlFile), output, 0644); err != nil {
+				return err
+			}
+
+			posts = append(posts,
+				Post{
+					Title:     filename[0 : len(filename)-len(ext)],
+					Link:      "http://localhost:8080/" + htmlFile,
+					UpdatedAt: info.ModTime()})
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	config.Posts = posts
+
+	iTmpl, err := ioutil.ReadFile(filepath.Join(config.Wd, "template", "index.html.tmpl"))
+	if err != nil {
+		return err
+	}
+
+	t, err := template.New("index").Parse(string(iTmpl))
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(filepath.Join(dir, "index.html"))
+	if err != nil {
+		return err
+	}
+	if err := t.Execute(f, config); err != nil {
+		return err
+	}
+
+	http.Handle("/", http.FileServer(http.Dir(dir)))
+	return http.ListenAndServe(":8080", nil)
 }

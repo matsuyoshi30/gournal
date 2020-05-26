@@ -49,8 +49,10 @@ func init() {
 			Name:  "test",
 			Usage: "",
 			Action: func(c *cli.Context) error {
-				fmt.Println("test command: ", c.Args().First())
-				return nil
+				if err := config.Load("config.yaml"); err != nil {
+					return err
+				}
+				return config.Serve()
 			},
 		},
 		{
