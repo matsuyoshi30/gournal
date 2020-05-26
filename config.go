@@ -41,7 +41,7 @@ var indexTmpl = `<!DOCTYPE html>
   <body>
     <article>
       <h1>{{ .Name }}</h1>
-      {{ range .Posts }}<a href="{{ .Link }}"><p>{{ .Title }}</p></a>>{{ end }}
+      {{ range .Posts }}<a href="{{ .Link }}"><p>{{ .Title }}</p></a>{{ end }}
     </article>
   </body>
 </html>
