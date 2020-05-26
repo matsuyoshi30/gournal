@@ -225,16 +225,10 @@ func (config *Config) Load(filename string) error {
 	return nil
 }
 
-func (config *Config) Serve() error {
-	dir, err := ioutil.TempDir("", "tmp")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(dir)
-
-	// build html from markdown file
+func (config *Config) Build(dest string) error {
 	posts := make([]Post, 0)
-	err = filepath.Walk(filepath.Join(config.Wd, "content"), func(path string, info os.FileInfo, err error) error {
+
+	err := filepath.Walk(filepath.Join(config.Wd, "content"), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -242,11 +236,11 @@ func (config *Config) Serve() error {
 		if info.IsDir() {
 			if path[len(filepath.Dir(path))+1:] != "content" {
 				if string(path[len(path)-5]) == "/" {
-					if err := os.Mkdir(filepath.Join(dir, path[len(filepath.Dir(path))+1:]), os.ModePerm); err != nil {
+					if err := os.Mkdir(filepath.Join(dest, path[len(filepath.Dir(path))+1:]), os.ModePerm); err != nil {
 						return err
 					}
 				} else {
-					if err := os.Mkdir(filepath.Join(dir, filepath.Dir(path)[len(filepath.Dir(path))-4:], path[len(filepath.Dir(path))+1:]), os.ModePerm); err != nil {
+					if err := os.Mkdir(filepath.Join(dest, filepath.Dir(path)[len(filepath.Dir(path))-4:], path[len(filepath.Dir(path))+1:]), os.ModePerm); err != nil {
 						return err
 					}
 				}
@@ -275,7 +269,7 @@ func (config *Config) Serve() error {
 					htmlFile = filepath.Join(y, m, filename[0:len(filename)-len(ext)]+".html")
 				}
 			}
-			if err := ioutil.WriteFile(filepath.Join(dir, htmlFile), output, 0644); err != nil {
+			if err := ioutil.WriteFile(filepath.Join(dest, htmlFile), output, 0644); err != nil {
 				return err
 			}
 
@@ -291,6 +285,21 @@ func (config *Config) Serve() error {
 		return err
 	}
 	config.Posts = posts
+
+	return nil
+}
+
+func (config *Config) Serve() error {
+	dir, err := ioutil.TempDir("", "tmp")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+
+	// build html from markdown file
+	if err := config.Build(dir); err != nil {
+		return err
+	}
 
 	iTmpl, err := ioutil.ReadFile(filepath.Join(config.Wd, "template", "index.html.tmpl"))
 	if err != nil {
