@@ -37,9 +37,25 @@ var indexTmpl = `<!DOCTYPE html>
 <html>
   <head>
     <title>{{ .Name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
+    <style>
+      .markdown-body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+      }
+      @media (max-width: 767px) {
+        .markdown-body {
+          padding: 15px;
+        }
+      }
+    </style>
   </head>
   <body>
-    <article>
+    <article class="markdown-body">
       <h1>{{ .Name }}</h1>
       {{ range .Posts }}<a href="{{ .Link }}"><p>{{ .Title }}</p></a>{{ end }}
     </article>
@@ -47,16 +63,47 @@ var indexTmpl = `<!DOCTYPE html>
 </html>
 `
 
-type Post struct {
-	Title     string
-	Link      string
-	UpdatedAt time.Time
-}
-
 var contentTmpl = `# Title
 
 ## Contents
 
+`
+
+type Post struct {
+	Title     string
+	Body      template.HTML
+	Link      string
+	UpdatedAt time.Time
+}
+
+var postTmpl = `<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ .Title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min\
+.css">
+    <style>
+      .markdown-body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+      }
+      @media (max-width: 767px) {
+        .markdown-body {
+          padding: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <article class="markdown-body">
+      {{ .Body }}
+    </article>
+  </body>
+</html>
 `
 
 var configTmpl = `name: your project name
@@ -274,15 +321,27 @@ func (config *Config) Build(dest string) error {
 					htmlFile = filepath.Join(y, m, htmlFile)
 				}
 			}
-			if err := ioutil.WriteFile(filepath.Join(dest, htmlFile), output, 0644); err != nil {
+
+			post := Post{
+				Title:     title,
+				Body:      template.HTML(output),
+				Link:      "http://localhost:8080/" + htmlFile,
+				UpdatedAt: info.ModTime(),
+			}
+
+			t, err := template.New("post").Parse(postTmpl)
+			if err != nil {
+				return err
+			}
+			f, err := os.Create(filepath.Join(dest, htmlFile))
+			if err != nil {
+				return err
+			}
+			if err := t.Execute(f, post); err != nil {
 				return err
 			}
 
-			posts = append(posts,
-				Post{
-					Title:     title,
-					Link:      "http://localhost:8080/" + htmlFile,
-					UpdatedAt: info.ModTime()})
+			posts = append(posts, post)
 		}
 		return nil
 	}); err != nil {
