@@ -228,19 +228,23 @@ func (config *Config) Load(filename string) error {
 func (config *Config) Build(dest string) error {
 	posts := make([]Post, 0)
 
-	err := filepath.Walk(filepath.Join(config.Wd, "content"), func(path string, info os.FileInfo, err error) error {
+	contentDir := filepath.Join(config.Wd, "content")
+	if err := filepath.Walk(contentDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
+		parentDir := filepath.Dir(path)
 		if info.IsDir() {
-			if path[len(filepath.Dir(path))+1:] != "content" {
+			if path[len(parentDir)+1:] != "content" {
 				if string(path[len(path)-5]) == "/" {
-					if err := os.Mkdir(filepath.Join(dest, path[len(filepath.Dir(path))+1:]), os.ModePerm); err != nil {
+					if err := os.Mkdir(filepath.Join(dest, path[len(parentDir)+1:]), os.ModePerm); err != nil {
 						return err
 					}
 				} else {
-					if err := os.Mkdir(filepath.Join(dest, filepath.Dir(path)[len(filepath.Dir(path))-4:], path[len(filepath.Dir(path))+1:]), os.ModePerm); err != nil {
+					y := parentDir[len(parentDir)-4:]
+					m := path[len(parentDir)+1:]
+					if err := os.Mkdir(filepath.Join(dest, y, m), os.ModePerm); err != nil {
 						return err
 					}
 				}
@@ -258,15 +262,16 @@ func (config *Config) Build(dest string) error {
 
 			filename := filepath.Base(path)
 			ext := filepath.Ext(filename)
-			htmlFile := filename[0:len(filename)-len(ext)] + ".html" // TypeMonthly
+			title := filename[0 : len(filename)-len(ext)]
+			htmlFile := title + ".html" // TypeMonthly
 
-			if !strings.HasSuffix(filepath.Dir(path), "content") {
-				if string(filepath.Dir(path)[len(filepath.Dir(path))-3]) != "/" { // TypeWeekly
-					htmlFile = filepath.Join(filepath.Dir(path)[len(filepath.Dir(path))-4:], filename[0:len(filename)-len(ext)]+".html")
+			if !strings.HasSuffix(parentDir, "content") {
+				if string(parentDir[len(parentDir)-3]) != "/" { // TypeWeekly
+					htmlFile = filepath.Join(parentDir[len(parentDir)-4:], htmlFile)
 				} else { // TypeDaily
-					m := filepath.Dir(path)[len(filepath.Dir(path))-2:]
-					y := filepath.Dir(path)[len(filepath.Dir(path))-7 : len(filepath.Dir(path))-3]
-					htmlFile = filepath.Join(y, m, filename[0:len(filename)-len(ext)]+".html")
+					m := parentDir[len(parentDir)-2:]
+					y := parentDir[len(parentDir)-7 : len(parentDir)-3]
+					htmlFile = filepath.Join(y, m, htmlFile)
 				}
 			}
 			if err := ioutil.WriteFile(filepath.Join(dest, htmlFile), output, 0644); err != nil {
@@ -275,13 +280,12 @@ func (config *Config) Build(dest string) error {
 
 			posts = append(posts,
 				Post{
-					Title:     filename[0 : len(filename)-len(ext)],
+					Title:     title,
 					Link:      "http://localhost:8080/" + htmlFile,
 					UpdatedAt: info.ModTime()})
 		}
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return err
 	}
 	config.Posts = posts
