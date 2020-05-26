@@ -17,8 +17,6 @@ path/to/project
 |- content
 |  |- mm-dd.md # weekly (default)
 |- static
-|  |- github-markdown.css
-|  |- highlight.min.js
 |- template
 |  |- index.html.tmpl
 |  |- content.md.tmpl
@@ -72,8 +70,6 @@ path/to/project
 |- content
 |  |- mm-dd.md # weekly
 |- static
-|  |- github-markdown.css
-|  |- highlight.min.js
 |- template
 |  |- index.html.tmpl
 |  |- content.md.tmpl
@@ -87,8 +83,6 @@ path/to/publish
 |- yyyy
 |  |- mm-dd.html
 |- static
-|  |- github-markdown.css
-|  |- highlight.min.js
 |- index.html
 ```
 
@@ -104,8 +98,8 @@ If you set the journal type as daily, html file is like below.
 ```
 path/to/publish
 |- yyyy
-|  |- mm
-|     |- dd.html
+   |- mm
+      |- dd.html
 ```
 
 Default build destination dir is `path/to/project/public`
