@@ -10,7 +10,7 @@ func init() {
 	app.Commands = []*cli.Command{
 		{
 			Name:  "new",
-			Usage: "",
+			Usage: "Creates a new project",
 			Action: func(c *cli.Context) error {
 				if c.Args().Len() == 0 {
 					return errors.New("invalid argument")
@@ -33,7 +33,7 @@ func init() {
 		},
 		{
 			Name:  "post",
-			Usage: "",
+			Usage: "Creates a new post",
 			Action: func(c *cli.Context) error {
 				if err := config.Load("config.yaml"); err != nil {
 					return err
@@ -46,7 +46,7 @@ func init() {
 		},
 		{
 			Name:  "test",
-			Usage: "",
+			Usage: "Builds html in temporary directory and runs local server",
 			Action: func(c *cli.Context) error {
 				if err := config.Load("config.yaml"); err != nil {
 					return err
@@ -56,7 +56,7 @@ func init() {
 		},
 		{
 			Name:  "pub",
-			Usage: "",
+			Usage: "Builds html in public directory",
 			Action: func(c *cli.Context) error {
 				if err := config.Load("config.yaml"); err != nil {
 					return err
