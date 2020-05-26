@@ -1,4 +1,4 @@
-# gournal - Go + Journal
+# gournal
 
 ## Usage
 
