@@ -21,10 +21,10 @@ var indexTmpl = `<!DOCTYPE html>
       }
       @media (prefers-color-scheme: dark) {
         body {
-          background-color: #24292e;
+          background-color: #1b262c;
         }
         .markdown-body img {
-          background-color: #24292e;
+          background-color: #1b262c;
         }
         .markdown-body {
           color: #e0e0e0;
@@ -74,6 +74,9 @@ var postTmpl = `<!DOCTYPE html>
         margin: 0 auto;
         padding: 45px;
       }
+      .markdown-body h1 {
+        font-size: 24px;
+      }
       @media (max-width: 767px) {
         .markdown-body {
           padding: 15px;
@@ -81,10 +84,10 @@ var postTmpl = `<!DOCTYPE html>
       }
       @media (prefers-color-scheme: dark) {
         body {
-          background-color: #24292e;
+          background-color: #1b262c;
         }
         .markdown-body img {
-          background-color: #24292e;
+          background-color: #1b262c;
         }
         .markdown-body {
           color: #e0e0e0;
@@ -104,7 +107,7 @@ var postTmpl = `<!DOCTYPE html>
   </head>
   <body>
     <article class="markdown-body">
-      <h1>{{ .Title }}</h1>
+      <h1>Week {{ .WeekNum }} - {{ .PostYear }}</h1>
       {{ if ne .FromDate "" }}
         The weekly report from {{ .FromDate }} to {{ .ToDate }}
       {{ end }}
