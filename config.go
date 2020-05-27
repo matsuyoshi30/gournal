@@ -243,7 +243,7 @@ func (config *Config) Build(dest string) error {
 			post := Post{
 				Title:     title,
 				Body:      template.HTML(output),
-				Link:      "http://localhost:8080/" + htmlFile,
+				Link:      "./" + htmlFile,
 				UpdatedAt: info.ModTime(),
 			}
 
