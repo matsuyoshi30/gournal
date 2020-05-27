@@ -265,11 +265,11 @@ func (config *Config) Build(dest string) error {
 	}
 	config.Posts = posts
 
-	staticPubDir := filepath.Join(config.PublishDir, "static")
-	if err := createIfNotExists(staticPubDir); err != nil {
+	staticDestDir := filepath.Join(dest, "static")
+	if err := createIfNotExists(staticDestDir); err != nil {
 		return err
 	}
-	if err := copyDir(config.StaticDir, staticPubDir); err != nil {
+	if err := copyDir(config.StaticDir, staticDestDir); err != nil {
 		return err
 	}
 
