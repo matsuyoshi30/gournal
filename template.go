@@ -44,7 +44,9 @@ var indexTmpl = `<!DOCTYPE html>
       <h1>{{ .Name }}</h1>
       {{ range $i, $p := .Posts }}
       {{ if or ( eq $i 0 ) ( $p.LastWeek ) }}<h2>{{ $p.PostYear }}</h2>{{ end }}
-      <a href="{{ $p.Link }}"><p>{{ $p.Title }}</p></a>
+      <ul>
+        <li><a href="{{ $p.Link }}">Week {{ $p.WeekNum }}</a> <small>{{ $p.FromDate }} - {{ $p.ToDate }}</small></li>
+      </ul>
       {{ end }}
     </article>
   </body>

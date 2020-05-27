@@ -47,6 +47,7 @@ type Post struct {
 	FromDate  string // use if TypeWeekly
 	ToDate    string // use if TypeWeekly
 	LastWeek  bool   // use if TypeWeekly
+	WeekNum   int    // use if TypeWeekly
 	PostDate  string // use if TypeMonthly or TypeDaily
 	BaseLink  string
 	Link      string
@@ -241,6 +242,7 @@ func (config *Config) Build(dest string) error {
 				Title:     title,
 				Body:      template.HTML(output),
 				LastWeek:  false,
+				WeekNum:   0,
 				BaseLink:  dest,
 				UpdatedAt: info.ModTime(),
 			}
@@ -261,6 +263,11 @@ func (config *Config) Build(dest string) error {
 						}
 						post.ToDate = to
 						post.LastWeek = isLastWeek
+						w, err := time.Parse("2006-01-02", yearStr+"-"+post.Title)
+						if err != nil {
+							return err
+						}
+						_, post.WeekNum = w.ISOWeek()
 						htmlFile = filepath.Join(yearStr, htmlFile)
 					} else { // TypeDaily
 						yearStr = parentDir[len(parentDir)-7 : len(parentDir)-3]
@@ -311,15 +318,9 @@ func addSeven(y, md string) (string, bool, error) {
 	if err != nil {
 		return "", false, err
 	}
-	year, m, d := date.AddDate(0, 0, 7).Date()
-
-	_year, err := strconv.Atoi(y)
-	if err != nil {
-		return "", false, err
-	}
-
+	_, m, d := date.AddDate(0, 0, 7).Date()
 	isLastWeek := false
-	if year-_year != 0 {
+	if _, w := date.ISOWeek(); w-52 >= 0 {
 		isLastWeek = true
 	}
 
