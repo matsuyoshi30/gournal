@@ -40,18 +40,18 @@ type Config struct {
 var config Config
 
 type Post struct {
-	Title     string
-	Body      template.HTML
-	PostYear  string
-	PostMonth string
-	FromDate  string // use if TypeWeekly
-	ToDate    string // use if TypeWeekly
-	LastWeek  bool   // use if TypeWeekly
-	WeekNum   int    // use if TypeWeekly
-	PostDate  string // use if TypeMonthly or TypeDaily
-	BaseLink  string
-	Link      string
-	UpdatedAt time.Time
+	Title      string
+	Body       template.HTML
+	PostYear   string
+	PostMonth  string
+	FromDate   string // use if TypeWeekly
+	ToDate     string // use if TypeWeekly
+	IsLastWeek bool   // use if TypeWeekly
+	WeekNum    int    // use if TypeWeekly
+	PostDate   string // use if TypeMonthly or TypeDaily
+	BaseLink   string
+	Link       string
+	UpdatedAt  time.Time
 }
 
 func (config *Config) New(dirpath string) error {
@@ -239,12 +239,12 @@ func (config *Config) Build(dest string) error {
 			htmlFile := title + ".html" // TypeMonthly
 
 			post := Post{
-				Title:     title,
-				Body:      template.HTML(output),
-				LastWeek:  false,
-				WeekNum:   0,
-				BaseLink:  dest,
-				UpdatedAt: info.ModTime(),
+				Title:      title,
+				Body:       template.HTML(output),
+				IsLastWeek: false,
+				WeekNum:    0,
+				BaseLink:   dest,
+				UpdatedAt:  info.ModTime(),
 			}
 
 			var yearStr, monthStr string
@@ -257,17 +257,17 @@ func (config *Config) Build(dest string) error {
 						yearStr = parentDir[len(parentDir)-4:]
 						monthStr = htmlFile[len(htmlFile)-8 : len(htmlFile)-6]
 						post.FromDate = post.Title
-						to, isLastWeek, err := addSeven(yearStr, post.Title)
+						to, err := addSeven(yearStr, post.Title)
 						if err != nil {
 							return err
 						}
 						post.ToDate = to
-						post.LastWeek = isLastWeek
 						w, err := time.Parse("2006-01-02", yearStr+"-"+post.Title)
 						if err != nil {
 							return err
 						}
 						_, post.WeekNum = w.ISOWeek()
+						post.IsLastWeek = post.WeekNum-52 >= 0
 						htmlFile = filepath.Join(yearStr, htmlFile)
 					} else { // TypeDaily
 						yearStr = parentDir[len(parentDir)-7 : len(parentDir)-3]
@@ -313,18 +313,14 @@ func (config *Config) Build(dest string) error {
 	return nil
 }
 
-func addSeven(y, md string) (string, bool, error) {
+func addSeven(y, md string) (string, error) {
 	date, err := time.Parse("2006-01-02", y+"-"+md)
 	if err != nil {
-		return "", false, err
+		return "", err
 	}
 	_, m, d := date.AddDate(0, 0, 7).Date()
-	isLastWeek := false
-	if _, w := date.ISOWeek(); w-52 >= 0 {
-		isLastWeek = true
-	}
 
-	return fmt.Sprintf("%02d", int(m)) + "-" + fmt.Sprintf("%02d", d), isLastWeek, nil
+	return fmt.Sprintf("%02d", int(m)) + "-" + fmt.Sprintf("%02d", d), nil
 }
 
 func copyDir(srcDir, dstDir string) error {
