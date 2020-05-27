@@ -355,6 +355,29 @@ func (config *Config) Build(dest string) error {
 	return nil
 }
 
+func generateTemplate(tmplName, tmplPath string) (*template.Template, error) {
+	tmpl, err := ioutil.ReadFile(tmplPath)
+	if err != nil {
+		return nil, err
+	}
+
+	t, err := template.New(tmplName).Parse(string(tmpl))
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}
+
+func (config *Config) createFileFromTemplate(tmpl *template.Template, dstPath string) error {
+	f, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+
+	return tmpl.Execute(f, config)
+}
+
 func (config *Config) Serve() error {
 	dir, err := ioutil.TempDir("", "tmp")
 	if err != nil {
@@ -367,20 +390,11 @@ func (config *Config) Serve() error {
 		return err
 	}
 
-	iTmpl, err := ioutil.ReadFile(filepath.Join(config.Wd, "template", "index.html.tmpl"))
+	t, err := generateTemplate("index", filepath.Join(config.Wd, "template", "index.html.tmpl"))
 	if err != nil {
 		return err
 	}
-
-	t, err := template.New("index").Parse(string(iTmpl))
-	if err != nil {
-		return err
-	}
-	f, err := os.Create(filepath.Join(dir, "index.html"))
-	if err != nil {
-		return err
-	}
-	if err := t.Execute(f, config); err != nil {
+	if err := config.createFileFromTemplate(t, filepath.Join(dir, "index.html")); err != nil {
 		return err
 	}
 
@@ -395,20 +409,11 @@ func (config *Config) Publish() error {
 		return err
 	}
 
-	iTmpl, err := ioutil.ReadFile(filepath.Join(config.Wd, "template", "index.html.tmpl"))
+	t, err := generateTemplate("index", filepath.Join(config.Wd, "template", "index.html.tmpl"))
 	if err != nil {
 		return err
 	}
-
-	t, err := template.New("index").Parse(string(iTmpl))
-	if err != nil {
-		return err
-	}
-	f, err := os.Create(filepath.Join(publishDir, "index.html"))
-	if err != nil {
-		return err
-	}
-	if err := t.Execute(f, config); err != nil {
+	if err := config.createFileFromTemplate(t, filepath.Join(publishDir, "index.html")); err != nil {
 		return err
 	}
 
