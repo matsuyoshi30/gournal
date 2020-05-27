@@ -115,7 +115,7 @@ func (config *Config) Post() error {
 	//   TypeMonthly -> `<contentDir>/202005.md`
 	contentDir := config.ContentDir
 	if config.Type == TypeDaily {
-		contentDir = filepath.Join(contentDir, strconv.Itoa(year), monthNameToNum(month))
+		contentDir = filepath.Join(contentDir, strconv.Itoa(year), strconv.Itoa(int(month)))
 	} else if config.Type == TypeWeekly {
 		contentDir = filepath.Join(contentDir, strconv.Itoa(year))
 	}
@@ -131,12 +131,13 @@ func (config *Config) Post() error {
 
 	// create post file
 	var filename string
-	if config.Type == TypeDaily {
+	switch config.Type {
+	case TypeDaily:
 		filename = strconv.Itoa(day) + ".md"
-	} else if config.Type == TypeWeekly {
+	case TypeWeekly:
 		filename = checkWeekday(time.Now()) + ".md"
-	} else if config.Type == TypeMonthly {
-		filename = strconv.Itoa(year) + month.String() + ".md"
+	case TypeMonthly:
+		filename = strconv.Itoa(year) + strconv.Itoa(int(month)) + ".md"
 	}
 	if err := ioutil.WriteFile(filepath.Join(contentDir, filename), b, 0644); err != nil {
 		return err
@@ -145,45 +146,13 @@ func (config *Config) Post() error {
 	return nil
 }
 
-func monthNameToNum(month time.Month) string {
-	var monthNum string
-	switch month {
-	case time.January:
-		monthNum = "01"
-	case time.February:
-		monthNum = "02"
-	case time.March:
-		monthNum = "03"
-	case time.April:
-		monthNum = "04"
-	case time.May:
-		monthNum = "05"
-	case time.June:
-		monthNum = "06"
-	case time.July:
-		monthNum = "07"
-	case time.August:
-		monthNum = "08"
-	case time.September:
-		monthNum = "09"
-	case time.October:
-		monthNum = "10"
-	case time.November:
-		monthNum = "11"
-	case time.December:
-		monthNum = "12"
-	}
-
-	return monthNum
-}
-
 func checkWeekday(date time.Time) string {
 	for date.Weekday() != time.Monday {
 		date = date.AddDate(0, 0, -1)
 	}
 	_, month, day := date.Date()
 
-	return monthNameToNum(month) + "-" + strconv.Itoa(day)
+	return strconv.Itoa(int(month)) + "-" + strconv.Itoa(day)
 }
 
 func (config *Config) Load(filename string) error {
