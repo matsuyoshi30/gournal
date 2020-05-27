@@ -45,7 +45,7 @@ func init() {
 			},
 		},
 		{
-			Name:  "test",
+			Name:  "serve",
 			Usage: "Builds html in temporary directory and runs local server",
 			Action: func(c *cli.Context) error {
 				if err := config.Load("config.yaml"); err != nil {
