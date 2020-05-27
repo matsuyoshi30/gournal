@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -29,6 +30,7 @@ type Config struct {
 	Wd          string `yaml:"wd"`
 	ContentDir  string `yaml:"contentDir"`
 	TemplateDir string `yaml:"templateDir"`
+	StaticDir   string `yaml:"staticDir"`
 	PublishDir  string `yaml:"publishDir"`
 	Type        JournalType
 	Posts       []Post
@@ -179,6 +181,9 @@ func (config *Config) Load(filename string) error {
 	if config.PublishDir == "" {
 		config.PublishDir = filepath.Join(config.Wd, "public")
 	}
+	if config.StaticDir == "" {
+		config.StaticDir = filepath.Join(config.Wd, "static")
+	}
 	config.Type = config.stringToType()
 
 	return nil
@@ -196,7 +201,7 @@ func (config *Config) Build(dest string) error {
 		if info.IsDir() {
 			if path != config.ContentDir {
 				if string(path[len(path)-5]) == "/" {
-					if err := os.Mkdir(filepath.Join(dest, path[len(parentDir)+1:]), os.ModePerm); err != nil {
+					if err := createIfNotExists(filepath.Join(dest, path[len(parentDir)+1:])); err != nil {
 						return err
 					}
 				} else {
@@ -259,6 +264,79 @@ func (config *Config) Build(dest string) error {
 		return err
 	}
 	config.Posts = posts
+
+	staticPubDir := filepath.Join(config.PublishDir, "static")
+	if err := createIfNotExists(staticPubDir); err != nil {
+		return err
+	}
+	if err := copyDir(config.StaticDir, staticPubDir); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func copyDir(srcDir, dstDir string) error {
+	entries, err := ioutil.ReadDir(srcDir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(srcDir, entry.Name())
+		dstPath := filepath.Join(dstDir, entry.Name())
+
+		fileInfo, err := os.Stat(srcPath)
+		if err != nil {
+			return err
+		}
+
+		switch fileInfo.Mode() & os.ModeType {
+		case os.ModeDir:
+			if err := createIfNotExists(dstPath); err != nil {
+				return err
+			}
+			if err := copyDir(srcPath, dstPath); err != nil {
+				return err
+			}
+		default:
+			if err := copyFile(srcPath, dstPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func copyFile(srcFile, dstFile string) error {
+	out, err := os.Create(dstFile)
+	if err != nil {
+		return err
+	}
+
+	in, err := os.Open(srcFile)
+	if err != nil {
+		return err
+	}
+
+	if _, err = io.Copy(out, in); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createIfNotExists(dir string) error {
+	if _, err := os.Stat(dir); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
 
 	return nil
 }
