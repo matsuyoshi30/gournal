@@ -1,5 +1,11 @@
 # gournal
 
+## Installation
+
+```
+$ go get github.com/matsuyoshi30/gournal
+```
+
 ## Usage
 
 ### gournal new
@@ -23,12 +29,17 @@ path/to/project
 |- config.yaml
 ```
 
-sample `config.yaml`
+#### `config.yaml` options
 
 ```
-name: new-project-name
+name: new project name
 description: This is new project
-type: week
+typestr: journal type string
+wd: project working directory
+contentDir: project content directory
+templateDir: project template directory
+staticDir: project static files like image directory
+publishDir: project publish directory
 ```
 
 You can add and delete files in the `static` and `template`, but cannot change directory structure.
