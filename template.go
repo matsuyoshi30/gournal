@@ -42,15 +42,18 @@ var indexTmpl = `<!DOCTYPE html>
   <body>
     <article class="markdown-body">
       <h1>{{ .Name }}</h1>
-      {{ range .Posts }}<a href="{{ .Link }}"><p>{{ .Title }}</p></a>{{ end }}
+      {{ range $i, $p := .Posts }}
+      {{ if or ( eq $i 0 ) ( $p.LastWeek ) }}<h2>{{ $p.PostYear }}</h2>{{ end }}
+      <a href="{{ $p.Link }}"><p>{{ $p.Title }}</p></a>
+      {{ end }}
     </article>
   </body>
 </html>
 `
 
-var contentTmpl = `# Title
+var contentTmpl = `## Title
 
-## Contents
+### Contents
 
 `
 
@@ -99,6 +102,10 @@ var postTmpl = `<!DOCTYPE html>
   </head>
   <body>
     <article class="markdown-body">
+      <h1>{{ .Title }}</h1>
+      {{ if ne .FromDate "" }}
+        The weekly report from {{ .FromDate }} to {{ .ToDate }}
+      {{ end }}
       {{ .Body }}
     </article>
   </body>

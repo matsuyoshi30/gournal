@@ -46,6 +46,7 @@ type Post struct {
 	PostMonth string
 	FromDate  string // use if TypeWeekly
 	ToDate    string // use if TypeWeekly
+	LastWeek  bool   // use if TypeWeekly
 	PostDate  string // use if TypeMonthly or TypeDaily
 	BaseLink  string
 	Link      string
@@ -239,6 +240,7 @@ func (config *Config) Build(dest string) error {
 			post := Post{
 				Title:     title,
 				Body:      template.HTML(output),
+				LastWeek:  false,
 				BaseLink:  dest,
 				UpdatedAt: info.ModTime(),
 			}
@@ -253,11 +255,12 @@ func (config *Config) Build(dest string) error {
 						yearStr = parentDir[len(parentDir)-4:]
 						monthStr = htmlFile[len(htmlFile)-8 : len(htmlFile)-6]
 						post.FromDate = post.Title
-						to, err := addSeven(yearStr, post.Title)
+						to, isLastWeek, err := addSeven(yearStr, post.Title)
 						if err != nil {
 							return err
 						}
 						post.ToDate = to
+						post.LastWeek = isLastWeek
 						htmlFile = filepath.Join(yearStr, htmlFile)
 					} else { // TypeDaily
 						yearStr = parentDir[len(parentDir)-7 : len(parentDir)-3]
@@ -290,7 +293,7 @@ func (config *Config) Build(dest string) error {
 	}); err != nil {
 		return err
 	}
-	config.Posts = posts
+	config.Posts = reverse(posts)
 
 	staticDestDir := filepath.Join(dest, "static")
 	if err := createIfNotExists(staticDestDir); err != nil {
@@ -303,14 +306,24 @@ func (config *Config) Build(dest string) error {
 	return nil
 }
 
-func addSeven(y, md string) (string, error) {
+func addSeven(y, md string) (string, bool, error) {
 	date, err := time.Parse("2006-01-02", y+"-"+md)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
-	_, m, d := date.AddDate(0, 0, 7).Date()
+	year, m, d := date.AddDate(0, 0, 7).Date()
 
-	return fmt.Sprintf("%02d", int(m)) + "-" + fmt.Sprintf("%02d", d), nil
+	_year, err := strconv.Atoi(y)
+	if err != nil {
+		return "", false, err
+	}
+
+	isLastWeek := false
+	if year-_year != 0 {
+		isLastWeek = true
+	}
+
+	return fmt.Sprintf("%02d", int(m)) + "-" + fmt.Sprintf("%02d", d), isLastWeek, nil
 }
 
 func copyDir(srcDir, dstDir string) error {
@@ -390,6 +403,13 @@ func generateTemplate(tmplName, tmplPath string) (*template.Template, error) {
 	}
 
 	return t, nil
+}
+
+func reverse(posts []Post) []Post {
+	for i, j := 0, len(posts)-1; i < j; i, j = i+1, j-1 {
+		posts[i], posts[j] = posts[j], posts[i]
+	}
+	return posts
 }
 
 func (config *Config) createFileFromTemplate(tmpl *template.Template, dstPath string) error {
