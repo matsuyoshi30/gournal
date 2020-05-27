@@ -27,6 +27,9 @@ type Config struct {
 	Description string `yaml:"description"`
 	TypeStr     string `yaml:"typestr"`
 	Wd          string `yaml:"wd"`
+	ContentDir  string `yaml:"contentDir"`
+	TemplateDir string `yaml:"templateDir"`
+	PublishDir  string `yaml:"publishDir"`
 	Type        JournalType
 	Posts       []Post
 }
@@ -180,21 +183,21 @@ func (config *Config) Post() error {
 	year, month, day := time.Now().Date()
 
 	// e.g.) 2020-05-24
-	//   TypeDaily   -> `content/2020/05/24.md`
-	//   TypeWeekly  -> `content/2020/05-18.md` check starting weekday
-	//   TypeMonthly -> `content/202005.md`
-	dir := filepath.Join(config.Wd, "content")
+	//   TypeDaily   -> `<contentDir>/2020/05/24.md`
+	//   TypeWeekly  -> `<contentDir>/2020/05-18.md` check starting weekday
+	//   TypeMonthly -> `<contentDir>/202005.md`
+	contentDir := config.ContentDir
 	if config.Type == TypeDaily {
-		dir = filepath.Join(dir, strconv.Itoa(year), monthNameToNum(month))
+		contentDir = filepath.Join(contentDir, strconv.Itoa(year), monthNameToNum(month))
 	} else if config.Type == TypeWeekly {
-		dir = filepath.Join(dir, strconv.Itoa(year))
+		contentDir = filepath.Join(contentDir, strconv.Itoa(year))
 	}
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(contentDir, os.ModePerm); err != nil {
 		return err
 	}
 
 	// read content template
-	b, err := ioutil.ReadFile(filepath.Join(config.Wd, "template", "content.md.tmpl"))
+	b, err := ioutil.ReadFile(filepath.Join(config.TemplateDir, "content.md.tmpl"))
 	if err != nil {
 		return err
 	}
@@ -208,7 +211,7 @@ func (config *Config) Post() error {
 	} else if config.Type == TypeMonthly {
 		filename = strconv.Itoa(year) + month.String() + ".md"
 	}
-	if err := ioutil.WriteFile(filepath.Join(dir, filename), b, 0644); err != nil {
+	if err := ioutil.WriteFile(filepath.Join(contentDir, filename), b, 0644); err != nil {
 		return err
 	}
 
@@ -270,6 +273,16 @@ func (config *Config) Load(filename string) error {
 	if err = yaml.Unmarshal(b, config); err != nil {
 		return err
 	}
+
+	if config.ContentDir == "" {
+		config.ContentDir = filepath.Join(config.Wd, "content")
+	}
+	if config.TemplateDir == "" {
+		config.TemplateDir = filepath.Join(config.Wd, "template")
+	}
+	if config.PublishDir == "" {
+		config.PublishDir = filepath.Join(config.Wd, "public")
+	}
 	config.Type = config.stringToType()
 
 	return nil
@@ -278,15 +291,14 @@ func (config *Config) Load(filename string) error {
 func (config *Config) Build(dest string) error {
 	posts := make([]Post, 0)
 
-	contentDir := filepath.Join(config.Wd, "content")
-	if err := filepath.Walk(contentDir, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(config.ContentDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		parentDir := filepath.Dir(path)
 		if info.IsDir() {
-			if path[len(parentDir)+1:] != "content" {
+			if path != config.ContentDir {
 				if string(path[len(path)-5]) == "/" {
 					if err := os.Mkdir(filepath.Join(dest, path[len(parentDir)+1:]), os.ModePerm); err != nil {
 						return err
@@ -390,7 +402,7 @@ func (config *Config) Serve() error {
 		return err
 	}
 
-	t, err := generateTemplate("index", filepath.Join(config.Wd, "template", "index.html.tmpl"))
+	t, err := generateTemplate("index", filepath.Join(config.TemplateDir, "index.html.tmpl"))
 	if err != nil {
 		return err
 	}
@@ -403,17 +415,15 @@ func (config *Config) Serve() error {
 }
 
 func (config *Config) Publish() error {
-	publishDir := filepath.Join(config.Wd, "public")
-
-	if err := config.Build(publishDir); err != nil {
+	if err := config.Build(config.PublishDir); err != nil {
 		return err
 	}
 
-	t, err := generateTemplate("index", filepath.Join(config.Wd, "template", "index.html.tmpl"))
+	t, err := generateTemplate("index", filepath.Join(config.TemplateDir, "index.html.tmpl"))
 	if err != nil {
 		return err
 	}
-	if err := config.createFileFromTemplate(t, filepath.Join(publishDir, "index.html")); err != nil {
+	if err := config.createFileFromTemplate(t, filepath.Join(config.PublishDir, "index.html")); err != nil {
 		return err
 	}
 
