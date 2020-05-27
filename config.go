@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -117,7 +118,7 @@ func (config *Config) Post() error {
 	//   TypeMonthly -> `<contentDir>/202005.md`
 	contentDir := config.ContentDir
 	if config.Type == TypeDaily {
-		contentDir = filepath.Join(contentDir, strconv.Itoa(year), strconv.Itoa(int(month)))
+		contentDir = filepath.Join(contentDir, strconv.Itoa(year), fmt.Sprintf("%02d", int(month)))
 	} else if config.Type == TypeWeekly {
 		contentDir = filepath.Join(contentDir, strconv.Itoa(year))
 	}
@@ -139,7 +140,7 @@ func (config *Config) Post() error {
 	case TypeWeekly:
 		filename = checkWeekday(time.Now()) + ".md"
 	case TypeMonthly:
-		filename = strconv.Itoa(year) + strconv.Itoa(int(month)) + ".md"
+		filename = strconv.Itoa(year) + fmt.Sprintf("%02d", int(month)) + ".md"
 	}
 	if err := ioutil.WriteFile(filepath.Join(contentDir, filename), b, 0644); err != nil {
 		return err
@@ -154,7 +155,7 @@ func checkWeekday(date time.Time) string {
 	}
 	_, month, day := date.Date()
 
-	return strconv.Itoa(int(month)) + "-" + strconv.Itoa(day)
+	return fmt.Sprintf("%02d", int(month)) + "-" + strconv.Itoa(day)
 }
 
 func (config *Config) Load(filename string) error {
@@ -172,6 +173,7 @@ func (config *Config) Load(filename string) error {
 		return err
 	}
 
+	config.Wd = wd
 	if config.ContentDir == "" {
 		config.ContentDir = filepath.Join(config.Wd, "content")
 	}
