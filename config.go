@@ -42,6 +42,12 @@ var config Config
 type Post struct {
 	Title     string
 	Body      template.HTML
+	PostYear  string
+	PostMonth string
+	FromDate  string // use if TypeWeekly
+	ToDate    string // use if TypeWeekly
+	PostDate  string // use if TypeMonthly or TypeDaily
+	BaseLink  string
 	Link      string
 	UpdatedAt time.Time
 }
@@ -230,22 +236,41 @@ func (config *Config) Build(dest string) error {
 			title := filename[0 : len(filename)-len(ext)]
 			htmlFile := title + ".html" // TypeMonthly
 
-			if !strings.HasSuffix(parentDir, "content") {
-				if string(parentDir[len(parentDir)-3]) != "/" { // TypeWeekly
-					htmlFile = filepath.Join(parentDir[len(parentDir)-4:], htmlFile)
-				} else { // TypeDaily
-					m := parentDir[len(parentDir)-2:]
-					y := parentDir[len(parentDir)-7 : len(parentDir)-3]
-					htmlFile = filepath.Join(y, m, htmlFile)
-				}
-			}
-
 			post := Post{
 				Title:     title,
 				Body:      template.HTML(output),
-				Link:      "./" + htmlFile,
+				BaseLink:  dest,
 				UpdatedAt: info.ModTime(),
 			}
+
+			var yearStr, monthStr string
+			if config.Type == TypeMonthly {
+				yearStr = title[len(title)-6 : len(title)-2]
+				monthStr = title[len(title)-2:]
+			} else {
+				if !strings.HasSuffix(parentDir, "content") {
+					if string(parentDir[len(parentDir)-3]) != "/" { // TypeWeekly
+						yearStr = parentDir[len(parentDir)-4:]
+						monthStr = htmlFile[len(htmlFile)-8 : len(htmlFile)-6]
+						post.FromDate = post.Title
+						to, err := addSeven(yearStr, post.Title)
+						if err != nil {
+							return err
+						}
+						post.ToDate = to
+						htmlFile = filepath.Join(yearStr, htmlFile)
+					} else { // TypeDaily
+						yearStr = parentDir[len(parentDir)-7 : len(parentDir)-3]
+						monthStr = parentDir[len(parentDir)-2:]
+						post.PostDate = htmlFile[len(htmlFile)-5 : len(htmlFile)-3]
+						htmlFile = filepath.Join(yearStr, monthStr, htmlFile)
+					}
+				}
+			}
+			post.PostYear = yearStr
+			post.PostMonth = monthStr
+
+			post.Link = "./" + htmlFile
 
 			t, err := template.New("post").Parse(postTmpl)
 			if err != nil {
@@ -276,6 +301,16 @@ func (config *Config) Build(dest string) error {
 	}
 
 	return nil
+}
+
+func addSeven(y, md string) (string, error) {
+	date, err := time.Parse("2006-01-02", y+"-"+md)
+	if err != nil {
+		return "", err
+	}
+	_, m, d := date.AddDate(0, 0, 7).Date()
+
+	return fmt.Sprintf("%02d", int(m)) + "-" + fmt.Sprintf("%02d", d), nil
 }
 
 func copyDir(srcDir, dstDir string) error {
