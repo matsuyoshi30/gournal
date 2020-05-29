@@ -301,7 +301,7 @@ func (config *Config) Build(dest string) error {
 
 			post.Link = "./" + htmlFile
 
-			t, err := generateTemplate("post", filepath.Join(config.TemplateDir, "post.html.Tmpl"))
+			t, err := generateTemplate("post", filepath.Join(config.TemplateDir, "post.html.tmpl"))
 			if err != nil {
 				return err
 			}
