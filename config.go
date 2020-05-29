@@ -143,11 +143,17 @@ func (config *Config) Post() error {
 	//   TypeDaily   -> `<contentDir>/2020/05/24.md`
 	//   TypeWeekly  -> `<contentDir>/2020/05-18.md` check starting weekday
 	//   TypeMonthly -> `<contentDir>/202005.md`
-	contentDir := config.ContentDir
-	if config.Type == TypeDaily {
+	var contentDir, postFilename string
+	switch config.Type {
+	case TypeMonthly:
+		contentDir = config.ContentDir
+		postFilename = strconv.Itoa(year) + fmt.Sprintf("%02d", int(month)) + ".md"
+	case TypeDaily:
 		contentDir = filepath.Join(contentDir, strconv.Itoa(year), fmt.Sprintf("%02d", int(month)))
-	} else if config.Type == TypeWeekly {
+		postFilename = strconv.Itoa(day) + ".md"
+	case TypeWeekly:
 		contentDir = filepath.Join(contentDir, strconv.Itoa(year))
+		postFilename = checkWeekday(time.Now()) + ".md"
 	}
 	if err := os.MkdirAll(contentDir, os.ModePerm); err != nil {
 		return err
@@ -160,16 +166,7 @@ func (config *Config) Post() error {
 	}
 
 	// create post file
-	var filename string
-	switch config.Type {
-	case TypeDaily:
-		filename = strconv.Itoa(day) + ".md"
-	case TypeWeekly:
-		filename = checkWeekday(time.Now()) + ".md"
-	case TypeMonthly:
-		filename = strconv.Itoa(year) + fmt.Sprintf("%02d", int(month)) + ".md"
-	}
-	if err := ioutil.WriteFile(filepath.Join(contentDir, filename), b, 0644); err != nil {
+	if err := ioutil.WriteFile(filepath.Join(contentDir, postFilename), b, 0644); err != nil {
 		return err
 	}
 
