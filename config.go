@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/matsuyoshi30/gom2h"
@@ -227,14 +226,15 @@ func (config *Config) Build(dest string) error {
 		parentDir := filepath.Dir(path)
 		if info.IsDir() {
 			if path != config.ContentDir {
-				if string(path[len(path)-5]) == "/" {
+				switch config.Type {
+				case TypeWeekly:
 					if err := createIfNotExists(filepath.Join(dest, path[len(parentDir)+1:])); err != nil {
 						return err
 					}
-				} else {
+				case TypeDaily:
 					y := parentDir[len(parentDir)-4:]
 					m := path[len(parentDir)+1:]
-					if err := os.Mkdir(filepath.Join(dest, y, m), os.ModePerm); err != nil {
+					if err := createIfNotExists(filepath.Join(dest, y, m)); err != nil {
 						return err
 					}
 				}
@@ -266,40 +266,40 @@ func (config *Config) Build(dest string) error {
 			}
 
 			var yearStr, monthStr string
-			if config.Type == TypeMonthly {
-				yearStr = title[len(title)-6 : len(title)-2]
-				monthStr = title[len(title)-2:]
-			} else {
-				if !strings.HasSuffix(parentDir, "content") {
-					if string(parentDir[len(parentDir)-3]) != "/" { // TypeWeekly
-						yearStr = parentDir[len(parentDir)-4:]
-						monthStr = title[:2]
-						post.FromDate = post.Title
-						to, err := toWeekend(yearStr, post.Title)
-						if err != nil {
-							return err
-						}
-						post.ToDate = to
-						w, err := time.Parse("2006-01-02", yearStr+"-"+post.Title)
-						if err != nil {
-							return err
-						}
-						_, post.WeekNum = w.ISOWeek()
-						post.IsLastWeek = post.WeekNum-52 >= 0
-						htmlFile = filepath.Join(yearStr, htmlFile)
-						post.CSSPath = "../static/styles.css"
-					} else { // TypeDaily
-						yearStr = parentDir[len(parentDir)-7 : len(parentDir)-3]
-						monthStr = parentDir[len(parentDir)-2:]
-						post.PostDate = htmlFile[len(htmlFile)-5 : len(htmlFile)-3]
-						htmlFile = filepath.Join(yearStr, monthStr, htmlFile)
-						post.CSSPath = "../../static/styles.css"
-					}
+			switch config.Type {
+			case TypeMonthly:
+				// <contentDir>/202005.md
+				yearStr = filename[:4]
+				monthStr = filename[4:]
+			case TypeWeekly:
+				// <contentDir>/2020/05-25.md
+				yearStr = parentDir[len(parentDir)-4:]
+				monthStr = title[:2]
+				post.FromDate = post.Title
+				to, err := toWeekend(yearStr, post.Title)
+				if err != nil {
+					return err
 				}
+				post.ToDate = to
+				w, err := time.Parse("2006-01-02", yearStr+"-"+post.Title)
+				if err != nil {
+					return err
+				}
+				_, post.WeekNum = w.ISOWeek()
+				post.IsLastWeek = post.WeekNum-52 >= 0
+				htmlFile = filepath.Join(yearStr, htmlFile)
+				post.CSSPath = "../static/styles.css"
+			case TypeDaily:
+				// <contentDir>/2020/05/25.md
+				yearStr = parentDir[len(parentDir)-7 : len(parentDir)-3]
+				monthStr = parentDir[len(parentDir)-2:]
+				post.PostDate = title
+				htmlFile = filepath.Join(yearStr, monthStr, htmlFile)
+				post.CSSPath = "../../static/styles.css"
 			}
+
 			post.PostYear = yearStr
 			post.PostMonth = monthStr
-
 			post.Link = "./" + htmlFile
 
 			t, err := generateTemplate("post", filepath.Join(config.TemplateDir, "post.html.tmpl"))
@@ -312,6 +312,7 @@ func (config *Config) Build(dest string) error {
 
 			posts = append(posts, post)
 		}
+
 		return nil
 	}); err != nil {
 		return err
