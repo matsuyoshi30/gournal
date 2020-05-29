@@ -274,7 +274,7 @@ func (config *Config) Build(dest string) error {
 						yearStr = parentDir[len(parentDir)-4:]
 						monthStr = htmlFile[len(htmlFile)-8 : len(htmlFile)-6]
 						post.FromDate = post.Title
-						to, err := addSeven(yearStr, post.Title)
+						to, err := toWeekend(yearStr, post.Title)
 						if err != nil {
 							return err
 						}
@@ -328,12 +328,12 @@ func (config *Config) Build(dest string) error {
 	return nil
 }
 
-func addSeven(y, md string) (string, error) {
+func toWeekend(y, md string) (string, error) {
 	date, err := time.Parse("2006-01-02", y+"-"+md)
 	if err != nil {
 		return "", err
 	}
-	_, m, d := date.AddDate(0, 0, 7).Date()
+	_, m, d := date.AddDate(0, 0, 6).Date()
 
 	return fmt.Sprintf("%02d", int(m)) + "-" + fmt.Sprintf("%02d", d), nil
 }
