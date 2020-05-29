@@ -272,7 +272,7 @@ func (config *Config) Build(dest string) error {
 				if !strings.HasSuffix(parentDir, "content") {
 					if string(parentDir[len(parentDir)-3]) != "/" { // TypeWeekly
 						yearStr = parentDir[len(parentDir)-4:]
-						monthStr = htmlFile[len(htmlFile)-8 : len(htmlFile)-6]
+						monthStr = title[:2]
 						post.FromDate = post.Title
 						to, err := toWeekend(yearStr, post.Title)
 						if err != nil {
