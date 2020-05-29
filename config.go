@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -453,8 +454,23 @@ func (config *Config) Serve() error {
 		return err
 	}
 
-	http.Handle("/", http.FileServer(http.Dir(dir)))
-	return http.ListenAndServe(":8080", nil)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	done := make(chan error, 1)
+	go func() {
+		http.Handle("/", http.FileServer(http.Dir(dir)))
+		done <- http.ListenAndServe(":8080", nil)
+	}()
+
+	select {
+	case <-c:
+		return nil
+	case err := <-done:
+		return err
+	}
+
+	return nil
 }
 
 func (config *Config) Publish() error {
