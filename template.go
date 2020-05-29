@@ -6,38 +6,7 @@ var indexTmpl = `<!DOCTYPE html>
     <title>{{ .Name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
-    <style>
-      .markdown-body {
-        box-sizing: border-box;
-        min-width: 200px;
-        max-width: 980px;
-        margin: 0 auto;
-        padding: 45px;
-      }
-      @media (max-width: 767px) {
-        .markdown-body {
-          padding: 15px;
-        }
-      }
-      @media (prefers-color-scheme: dark) {
-        body {
-          background-color: #1b262c;
-        }
-        .markdown-body img {
-          background-color: #1b262c;
-        }
-        .markdown-body {
-          color: #e0e0e0;
-        }
-        .markdown-body blockquote {
-          color: #95989a;
-          border-left: .25em solid #6d6d6d;
-        }
-        .markdown-body a {
-          color: #6bb4ff;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="./static/styles.css">
   </head>
   <body>
     <article class="markdown-body">
@@ -53,6 +22,38 @@ var indexTmpl = `<!DOCTYPE html>
 </html>
 `
 
+var cssTmpl = `.markdown-body {
+  box-sizing: border-box;
+  min-width: 200px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 45px;
+}
+@media (max-width: 767px) {
+  .markdown-body {
+    padding: 15px;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1b262c;
+  }
+  .markdown-body img {
+    background-color: #1b262c;
+  }
+  .markdown-body {
+    color: #e0e0e0;
+  }
+  .markdown-body blockquote {
+    color: #95989a;
+    border-left: .25em solid #6d6d6d;
+  }
+  .markdown-body a {
+    color: #6bb4ff;
+  }
+}
+`
+
 var contentTmpl = `## Title
 
 ### Contents
@@ -64,43 +65,8 @@ var postTmpl = `<!DOCTYPE html>
   <head>
     <title>{{ .Title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min\
-.css">
-    <style>
-      .markdown-body {
-        box-sizing: border-box;
-        min-width: 200px;
-        max-width: 980px;
-        margin: 0 auto;
-        padding: 45px;
-      }
-      .markdown-body h1 {
-        font-size: 24px;
-      }
-      @media (max-width: 767px) {
-        .markdown-body {
-          padding: 15px;
-        }
-      }
-      @media (prefers-color-scheme: dark) {
-        body {
-          background-color: #1b262c;
-        }
-        .markdown-body img {
-          background-color: #1b262c;
-        }
-        .markdown-body {
-          color: #e0e0e0;
-        }
-        .markdown-body blockquote {
-          color: #95989a;
-          border-left: .25em solid #6d6d6d;
-        }
-        .markdown-body a {
-          color: #6bb4ff;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
+    <link rel="stylesheet" href="{{ .CSSPath }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
     <script>hljs.initHighlightingOnLoad();</script>

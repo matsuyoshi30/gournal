@@ -50,8 +50,46 @@ type Post struct {
 	WeekNum    int    // use if TypeWeekly
 	PostDate   string // use if TypeMonthly or TypeDaily
 	BaseLink   string
+	CSSPath    string
 	Link       string
 	UpdatedAt  time.Time
+}
+
+func createDirs(dir string) error {
+	dirs := []string{"public", "content", "static", "template"}
+	for _, d := range dirs {
+		if err := os.Mkdir(filepath.Join(dir, d), os.ModePerm); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func createFiles(dir string) error {
+	files := []struct {
+		dir      string
+		filename string
+		contents string
+	}{
+		{"template", "index.html.tmpl", indexTmpl},
+		{"template", "post.html.tmpl", postTmpl},
+		{"template", "content.md.tmpl", contentTmpl},
+		{"static", "styles.css", cssTmpl},
+		{"", "config.yaml", configTmpl + "typestr: " + config.typeToString() + "\n" + "wd: " + dir + "\n"},
+	}
+	for _, f := range files {
+		file := filepath.Join(dir, f.filename)
+		if f.dir != "" {
+			file = filepath.Join(dir, f.dir, f.filename)
+		}
+
+		if err := ioutil.WriteFile(file, []byte(f.contents), 0644); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (config *Config) New(dirpath string) error {
@@ -59,33 +97,14 @@ func (config *Config) New(dirpath string) error {
 	if err != nil {
 		return err
 	}
-	wd = filepath.Join(wd, dirpath)
 
-	dirs := []string{"public", "content", "static", "template"}
-	for _, d := range dirs {
-		if err := os.Mkdir(filepath.Join(wd, d), os.ModePerm); err != nil {
-			return err
-		}
+	projectDir := filepath.Join(wd, dirpath)
+	if err := createDirs(projectDir); err != nil {
+		return err
 	}
 
-	files := []struct {
-		dir      string
-		filename string
-		contents string
-	}{
-		{"template", "index.html.tmpl", indexTmpl},
-		{"template", "content.md.tmpl", contentTmpl},
-		{"", "config.yaml", configTmpl + "typestr: " + config.typeToString() + "\n" + "wd: " + wd + "\n"},
-	}
-	for _, f := range files {
-		file := filepath.Join(wd, f.filename)
-		if f.dir != "" {
-			file = filepath.Join(wd, f.dir, f.filename)
-		}
-
-		if err := ioutil.WriteFile(file, []byte(f.contents), 0644); err != nil {
-			return err
-		}
+	if err := createFiles(projectDir); err != nil {
+		return err
 	}
 
 	return nil
@@ -244,6 +263,7 @@ func (config *Config) Build(dest string) error {
 				IsLastWeek: false,
 				WeekNum:    0,
 				BaseLink:   dest,
+				CSSPath:    "./static/styles.css",
 				UpdatedAt:  info.ModTime(),
 			}
 
@@ -269,11 +289,13 @@ func (config *Config) Build(dest string) error {
 						_, post.WeekNum = w.ISOWeek()
 						post.IsLastWeek = post.WeekNum-52 >= 0
 						htmlFile = filepath.Join(yearStr, htmlFile)
+						post.CSSPath = "../static/styles.css"
 					} else { // TypeDaily
 						yearStr = parentDir[len(parentDir)-7 : len(parentDir)-3]
 						monthStr = parentDir[len(parentDir)-2:]
 						post.PostDate = htmlFile[len(htmlFile)-5 : len(htmlFile)-3]
 						htmlFile = filepath.Join(yearStr, monthStr, htmlFile)
+						post.CSSPath = "../../static/styles.css"
 					}
 				}
 			}
@@ -282,15 +304,11 @@ func (config *Config) Build(dest string) error {
 
 			post.Link = "./" + htmlFile
 
-			t, err := template.New("post").Parse(postTmpl)
+			t, err := generateTemplate("post", filepath.Join(config.TemplateDir, "post.html.Tmpl"))
 			if err != nil {
 				return err
 			}
-			f, err := os.Create(filepath.Join(dest, htmlFile))
-			if err != nil {
-				return err
-			}
-			if err := t.Execute(f, post); err != nil {
+			if err := config.createFileFromTemplate(t, filepath.Join(dest, htmlFile), post); err != nil {
 				return err
 			}
 
@@ -409,13 +427,13 @@ func reverse(posts []Post) []Post {
 	return posts
 }
 
-func (config *Config) createFileFromTemplate(tmpl *template.Template, dstPath string) error {
+func (config *Config) createFileFromTemplate(tmpl *template.Template, dstPath string, data interface{}) error {
 	f, err := os.Create(dstPath)
 	if err != nil {
 		return err
 	}
 
-	return tmpl.Execute(f, config)
+	return tmpl.Execute(f, data)
 }
 
 func (config *Config) Serve() error {
@@ -434,7 +452,7 @@ func (config *Config) Serve() error {
 	if err != nil {
 		return err
 	}
-	if err := config.createFileFromTemplate(t, filepath.Join(dir, "index.html")); err != nil {
+	if err := config.createFileFromTemplate(t, filepath.Join(dir, "index.html"), config); err != nil {
 		return err
 	}
 
@@ -451,7 +469,7 @@ func (config *Config) Publish() error {
 	if err != nil {
 		return err
 	}
-	if err := config.createFileFromTemplate(t, filepath.Join(config.PublishDir, "index.html")); err != nil {
+	if err := config.createFileFromTemplate(t, filepath.Join(config.PublishDir, "index.html"), config); err != nil {
 		return err
 	}
 
