@@ -286,14 +286,14 @@ func (config *Config) Build(dest string) error {
 				}
 				_, post.WeekNum = w.ISOWeek()
 				post.IsLastWeek = post.WeekNum-52 >= 0
-				htmlFile = filepath.Join(yearStr, htmlFile)
+				htmlFile = filepath.Join(yearStr, post.Title+".html")
 				post.CSSPath = "../static/styles.css"
 			case TypeDaily:
 				// <contentDir>/2020/05/25.md
 				yearStr = parentDir[len(parentDir)-7 : len(parentDir)-3]
 				monthStr = parentDir[len(parentDir)-2:]
 				post.PostDate = post.Title
-				htmlFile = filepath.Join(yearStr, monthStr, htmlFile)
+				htmlFile = filepath.Join(yearStr, monthStr, post.Title+".html")
 				post.CSSPath = "../../static/styles.css"
 			}
 
