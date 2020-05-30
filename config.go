@@ -228,10 +228,12 @@ func (config *Config) Build(dest string) error {
 			if path != config.ContentDir {
 				switch config.Type {
 				case TypeWeekly:
+					// <contentDir>/2020/
 					if err := createIfNotExists(filepath.Join(dest, path[len(parentDir)+1:])); err != nil {
 						return err
 					}
 				case TypeDaily:
+					// <contentDir>/2020/05/
 					y := parentDir[len(parentDir)-4:]
 					m := path[len(parentDir)+1:]
 					if err := createIfNotExists(filepath.Join(dest, y, m)); err != nil {
@@ -250,13 +252,8 @@ func (config *Config) Build(dest string) error {
 				return err
 			}
 
-			filename := filepath.Base(path)
-			ext := filepath.Ext(filename)
-			title := filename[0 : len(filename)-len(ext)]
-			htmlFile := title + ".html" // TypeMonthly
-
 			post := Post{
-				Title:      title,
+				Title:      extractTitle(path),
 				Body:       template.HTML(output),
 				IsLastWeek: false,
 				WeekNum:    0,
@@ -265,16 +262,18 @@ func (config *Config) Build(dest string) error {
 				UpdatedAt:  info.ModTime(),
 			}
 
+			var htmlFile string
 			var yearStr, monthStr string
 			switch config.Type {
 			case TypeMonthly:
 				// <contentDir>/202005.md
-				yearStr = filename[:4]
-				monthStr = filename[4:]
+				yearStr = post.Title[:4]
+				monthStr = post.Title[4:]
+				htmlFile = post.Title + ".html"
 			case TypeWeekly:
 				// <contentDir>/2020/05-25.md
 				yearStr = parentDir[len(parentDir)-4:]
-				monthStr = title[:2]
+				monthStr = post.Title[:2]
 				post.FromDate = post.Title
 				to, err := toWeekend(yearStr, post.Title)
 				if err != nil {
@@ -293,7 +292,7 @@ func (config *Config) Build(dest string) error {
 				// <contentDir>/2020/05/25.md
 				yearStr = parentDir[len(parentDir)-7 : len(parentDir)-3]
 				monthStr = parentDir[len(parentDir)-2:]
-				post.PostDate = title
+				post.PostDate = post.Title
 				htmlFile = filepath.Join(yearStr, monthStr, htmlFile)
 				post.CSSPath = "../../static/styles.css"
 			}
@@ -328,6 +327,13 @@ func (config *Config) Build(dest string) error {
 	}
 
 	return nil
+}
+
+func extractTitle(path string) string {
+	filename := filepath.Base(path)
+	ext := filepath.Ext(filename)
+
+	return filename[0 : len(filename)-len(ext)]
 }
 
 func toWeekend(y, md string) (string, error) {
