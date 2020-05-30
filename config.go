@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -442,10 +443,13 @@ func (config *Config) createFileFromTemplate(tmpl *template.Template, dstPath st
 }
 
 func (config *Config) Serve() error {
+	logger := log.New(os.Stdout, "[Serve] ", log.Ldate|log.Ltime)
+
 	dir, err := ioutil.TempDir("", "tmp")
 	if err != nil {
 		return err
 	}
+	logger.Printf("Create temporary directory: %s\n", dir)
 	defer os.RemoveAll(dir)
 
 	// build html from markdown file
@@ -467,6 +471,8 @@ func (config *Config) Serve() error {
 	done := make(chan error, 1)
 	go func() {
 		http.Handle("/", http.FileServer(http.Dir(dir)))
+		logger.Printf("Listen And Serve at: http://localhost:%d\n", 8080)
+		logger.Printf("If you want to stop, press Ctrl-C\n")
 		done <- http.ListenAndServe(":8080", nil)
 	}()
 
