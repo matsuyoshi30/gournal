@@ -476,8 +476,6 @@ func (config *Config) Serve() error {
 	case err := <-done:
 		return err
 	}
-
-	return nil
 }
 
 func (config *Config) Publish() error {
