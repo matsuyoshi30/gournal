@@ -179,7 +179,7 @@ func checkWeekday(date time.Time) string {
 	}
 	_, month, day := date.Date()
 
-	return fmt.Sprintf("%02d", int(month)) + "-" + strconv.Itoa(day)
+	return fmt.Sprintf("%02d", int(month)) + "-" + fmt.Sprintf("%02d", day)
 }
 
 func (config *Config) Load(filename string) error {
