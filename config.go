@@ -165,8 +165,14 @@ func (config *Config) Post() error {
 		return err
 	}
 
-	// create post file
-	if err := ioutil.WriteFile(filepath.Join(contentDir, postFilename), b, 0644); err != nil {
+	// create post file if not exists
+	if _, err := os.Stat(filepath.Join(contentDir, postFilename)); err == nil {
+		fmt.Println(postFilename, "exists")
+	} else if os.IsNotExist(err) {
+		if err := ioutil.WriteFile(filepath.Join(contentDir, postFilename), b, 0644); err != nil {
+			return err
+		}
+	} else {
 		return err
 	}
 
