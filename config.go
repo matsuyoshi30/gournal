@@ -317,7 +317,10 @@ func createPost(dir, path string, contents []byte) (*Post, error) {
 			return nil, err
 		}
 		_, post.WeekNum = w.ISOWeek()
-		post.IsLastWeek = post.WeekNum-52 >= 0
+		nextWeek := w.AddDate(0, 0, 7)
+		if w.Year() != nextWeek.Year() {
+			post.IsLastWeek = true
+		}
 		htmlFile = filepath.Join(yearStr, post.Title+".html")
 		post.CSSPath = "../static/styles.css"
 	case TypeDaily:
