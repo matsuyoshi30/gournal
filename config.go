@@ -298,7 +298,7 @@ func createPost(dir, path string, contents []byte) (*Post, error) {
 		IsLastWeek: false,
 		WeekNum:    0,
 		BaseLink:   dir,
-		CSSPath:    "./static/styles.css",
+		CSSPath:    filepath.Join("static", "styles.css"),
 	}
 
 	parentDir := filepath.Dir(path)
@@ -331,14 +331,14 @@ func createPost(dir, path string, contents []byte) (*Post, error) {
 			post.IsLastWeek = true
 		}
 		htmlFile = filepath.Join(yearStr, post.Title+".html")
-		post.CSSPath = "../static/styles.css"
+		post.CSSPath = filepath.Join("..", "static", "styles.css")
 	case TypeDaily:
 		// <contentDir>/2020/05/25.md
 		yearStr = parentDir[len(parentDir)-7 : len(parentDir)-3]
 		monthStr = parentDir[len(parentDir)-2:]
 		post.PostDate = post.Title
 		htmlFile = filepath.Join(yearStr, monthStr, post.Title+".html")
-		post.CSSPath = "../../static/styles.css"
+		post.CSSPath = filepath.Join("..", "..", "static", "styles.css")
 	}
 
 	post.PostYear = yearStr
