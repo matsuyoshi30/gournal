@@ -343,7 +343,7 @@ func createPost(dir, path string, contents []byte) (*Post, error) {
 
 	post.PostYear = yearStr
 	post.PostMonth = monthStr
-	post.Link = "./" + htmlFile
+	post.Link = htmlFile
 
 	return post, nil
 }
