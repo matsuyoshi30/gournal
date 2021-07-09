@@ -53,6 +53,9 @@ type Post struct {
 	BaseLink   string
 	CSSPath    string
 	Link       string
+
+	PrevPost *Post
+	NextPost *Post
 }
 
 func createDirs(dir string) error {
@@ -262,6 +265,12 @@ func (config *Config) Build(dest string) error {
 			if err != nil {
 				return err
 			}
+
+			if len(posts) != 0 {
+				post.PrevPost = posts[len(posts)-1]
+				posts[len(posts)-1].NextPost = post
+			}
+
 			posts = append(posts, post)
 		}
 
@@ -335,14 +344,6 @@ func createPost(dir, path string, contents []byte) (*Post, error) {
 	post.PostYear = yearStr
 	post.PostMonth = monthStr
 	post.Link = "./" + htmlFile
-
-	t, err := generateTemplate("post", filepath.Join(config.TemplateDir, "post.html.tmpl"))
-	if err != nil {
-		return nil, err
-	}
-	if err := config.createFileFromTemplate(t, filepath.Join(dir, htmlFile), post); err != nil {
-		return nil, err
-	}
 
 	return post, nil
 }
@@ -482,6 +483,16 @@ func (config *Config) Serve() error {
 		return err
 	}
 
+	for _, post := range config.Posts {
+		t, err := generateTemplate("post", filepath.Join(config.TemplateDir, "post.html.tmpl"))
+		if err != nil {
+			return err
+		}
+		if err := config.createFileFromTemplate(t, filepath.Join(dir, post.Link), post); err != nil {
+			return err
+		}
+	}
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
@@ -512,6 +523,16 @@ func (config *Config) Publish() error {
 	}
 	if err := config.createFileFromTemplate(t, filepath.Join(config.PublishDir, "index.html"), config); err != nil {
 		return err
+	}
+
+	for _, post := range config.Posts {
+		t, err := generateTemplate("post", filepath.Join(config.TemplateDir, "post.html.tmpl"))
+		if err != nil {
+			return err
+		}
+		if err := config.createFileFromTemplate(t, filepath.Join(config.PublishDir, post.Link), post); err != nil {
+			return err
+		}
 	}
 
 	return nil
